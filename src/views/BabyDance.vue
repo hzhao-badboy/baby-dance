@@ -1,6 +1,6 @@
 <template>
   <div class="baby-dance-container">
-    <h1 class="title">数胎动123</h1>
+    <h1 class="title">数胎动</h1>
     <div>
       <div class="center_content">
         <div class="center_content_left">倒计时：{{ showTime }}</div>
