@@ -229,7 +229,7 @@ const start = () => {
   totalCount.value = 0;
   validCount.value = 0;
   lastClickTime.value = null;
-  diffSeconds.value = 10;
+  diffSeconds.value = 3600;
   dd.value["start_time"] = Moment().format("YYYY-MM-DD HH:mm:ss");
   startEnabled.value = true;
   clearInterval(timeInterval.value);
@@ -272,7 +272,7 @@ const addRecord = () => {
       validCount.value += 1;
     } else {
       const interTime = nowTime.valueOf() - lastClickTime.value;
-      if (interTime >= 5 * 1000) {
+      if (interTime >= 5 * 60 * 1000) {
         rec.className = "record record_animation";
         validCount.value += 1;
       }
