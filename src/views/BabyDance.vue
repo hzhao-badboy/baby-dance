@@ -38,9 +38,16 @@
       </div>
     </div>
 
+    <el-table :data="historyData" style="width: 100%">
+      <el-table-column prop="start_time" label="开始时间" />
+      <el-table-column prop="end_time" label="结束时间" />
+      <el-table-column prop="valid_count" label="有效次数" />
+      <el-table-column prop="total_count" label="总次数" />
+    </el-table>
+
     <el-dialog
       title="本次结果"
-      v-model:visible="successVisible"
+      v-model="successVisible"
       :before-close="countSuccess"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -85,10 +92,21 @@
         </span>
       </template>
     </el-dialog>
+
+    <el-dialog title="" v-model="userDialogVisible" width="30%">
+      <el-input v-model="userName" placeholder="昵称" label="昵称" clearable />
+      <template #footer>
+        <span>
+          <el-button @click="userDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveUser">确认</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import { addToNotion } from "@/api/baby";
 import Moment from "moment";
 import { onMounted, ref } from "vue";
 
@@ -102,8 +120,29 @@ const successVisible = ref(false);
 const stopVisible = ref(false);
 const className = ref("");
 const diffSeconds = ref(0);
+const dd = ref<HistoryData>({} as HistoryData);
+const historyData = ref<HistoryData[]>([]);
+const userName = ref("");
+const userDialogVisible = ref(false);
+
+interface HistoryData {
+  start_time: string;
+  end_time: string;
+  valid_count: number;
+  total_count: number;
+}
 
 onMounted(() => {
+  userName.value = localStorage.getItem("user_name");
+  if (!userName.value) {
+    userDialogVisible.value = true;
+  }
+
+  const oldRecords = localStorage.getItem("history_record");
+  if (oldRecords) {
+    historyData.value = JSON.parse(oldRecords) as HistoryData[];
+  }
+
   const rec = document.getElementsByClassName("record")[0];
   // 动画结束时事件
   rec.addEventListener("webkitAnimationEnd", function () {
@@ -111,7 +150,62 @@ onMounted(() => {
   });
 });
 
+const saveUser = () => {
+  localStorage.setItem("user_name", userName.value);
+  userDialogVisible.value = false;
+};
+
+let data = {
+  parent: {
+    type: "database_id",
+    database_id: "c06b9418ffad4511983e3c953433b9ff",
+  },
+  properties: {},
+};
+
 const countSuccess = () => {
+  dd.value["end_time"] = Moment().format("YYYY-MM-DD HH:mm:ss");
+  dd.value["valid_count"] = validCount.value;
+  dd.value["total_count"] = totalCount.value;
+  historyData.value.unshift(dd.value);
+  localStorage.setItem("history_record", JSON.stringify(historyData.value));
+
+  data.properties = {
+    昵称: {
+      type: "title",
+      title: [
+        {
+          type: "text",
+          text: {
+            content: userName.value,
+          },
+        },
+      ],
+    },
+    开始时间: {
+      type: "date",
+      date: {
+        start: dd.value.start_time,
+      },
+    },
+    结束时间: {
+      type: "date",
+      date: {
+        start: dd.value.end_time,
+      },
+    },
+    有效次数: {
+      type: "number",
+      number: dd.value.valid_count,
+    },
+    总次数: {
+      type: "number",
+      number: dd.value.total_count,
+    },
+  };
+
+  addToNotion(data);
+
   successVisible.value = false;
   totalCount.value = 0;
   validCount.value = 0;
@@ -135,7 +229,8 @@ const start = () => {
   totalCount.value = 0;
   validCount.value = 0;
   lastClickTime.value = null;
-  diffSeconds.value = 3600;
+  diffSeconds.value = 10;
+  dd.value["start_time"] = Moment().format("YYYY-MM-DD HH:mm:ss");
   startEnabled.value = true;
   clearInterval(timeInterval.value);
   getSurplusTime();
@@ -177,7 +272,7 @@ const addRecord = () => {
       validCount.value += 1;
     } else {
       const interTime = nowTime.valueOf() - lastClickTime.value;
-      if (interTime >= 3 * 60 * 1000) {
+      if (interTime >= 5 * 1000) {
         rec.className = "record record_animation";
         validCount.value += 1;
       }
