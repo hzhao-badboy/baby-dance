@@ -39,6 +39,7 @@
     </div>
 
     <el-table :data="historyData" style="width: 100%">
+      <el-table-column prop="nickname" label="昵称" />
       <el-table-column prop="start_time" label="开始时间" />
       <el-table-column prop="end_time" label="结束时间" />
       <el-table-column prop="valid_count" label="有效次数" />
@@ -93,11 +94,22 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="" v-model="userDialogVisible" width="30%">
-      <el-input v-model="userName" placeholder="昵称" label="昵称" clearable />
+    <el-dialog
+      title=""
+      v-model="userDialogVisible"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <el-input
+        v-model="userName"
+        placeholder="请输入昵称"
+        clearable
+        maxlength="20"
+        aria-required="true"
+      />
       <template #footer>
         <span>
-          <el-button @click="userDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="saveUser">确认</el-button>
         </span>
       </template>
@@ -126,6 +138,7 @@ const userName = ref("");
 const userDialogVisible = ref(false);
 
 interface HistoryData {
+  nickname: string;
   start_time: string;
   end_time: string;
   valid_count: number;
@@ -151,6 +164,10 @@ onMounted(() => {
 });
 
 const saveUser = () => {
+  if (!userName.value) {
+    alert("请输入昵称");
+    return;
+  }
   localStorage.setItem("user_name", userName.value);
   userDialogVisible.value = false;
 };
@@ -164,9 +181,9 @@ let data = {
 };
 
 const countSuccess = () => {
-  dd.value["end_time"] = Moment().format("YYYY-MM-DD HH:mm:ss");
-  dd.value["valid_count"] = validCount.value;
-  dd.value["total_count"] = totalCount.value;
+  dd.value.end_time = Moment().format("YYYY-MM-DD HH:mm:ss");
+  dd.value.valid_count = validCount.value;
+  dd.value.total_count = totalCount.value;
   historyData.value.unshift(dd.value);
   localStorage.setItem("history_record", JSON.stringify(historyData.value));
 
@@ -230,7 +247,8 @@ const start = () => {
   validCount.value = 0;
   lastClickTime.value = null;
   diffSeconds.value = 3600;
-  dd.value["start_time"] = Moment().format("YYYY-MM-DD HH:mm:ss");
+  dd.value.nickname = userName.value;
+  dd.value.start_time = Moment().format("YYYY-MM-DD HH:mm:ss");
   startEnabled.value = true;
   clearInterval(timeInterval.value);
   getSurplusTime();
