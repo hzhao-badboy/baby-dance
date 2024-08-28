@@ -290,7 +290,7 @@ const addRecord = () => {
       validCount.value += 1;
     } else {
       const interTime = nowTime.valueOf() - lastClickTime.value;
-      if (interTime >= 5 * 60 * 1000) {
+      if (interTime >= 3 * 60 * 1000) {
         rec.className = "record record_animation";
         validCount.value += 1;
       }
